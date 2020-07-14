@@ -18,7 +18,7 @@ spec:
         - name: django-web
           image: n01an/django_app:1.0.3
           ports:
-            - containerPort: 8000
+            - containerPort: 5000
 ---
 kind: Service
 apiVersion: v1
@@ -29,7 +29,7 @@ spec:
     pod: django-container
   ports:
   - protocol: TCP
-    port: 8000
+    port: 5000
     # targetPort: 8001
   type: ClusterIP
   # type: NodePort
@@ -51,4 +51,4 @@ spec:
       - path: /django
         backend:
           serviceName: django-service
-          servicePort: 8000
+          servicePort: 5000
