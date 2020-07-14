@@ -5,7 +5,7 @@ COPY requirements.txt settings.py /app/
 RUN pip install -r requirements.txt
 RUN django-admin startproject mysite /app
 RUN mv /app/settings.py /app/mysite/settings.py
-EXPOSE 8000
+EXPOSE 8800
 STOPSIGNAL SIGINT
 ENTRYPOINT ["python", "manage.py"]
-CMD ["runserver", "0.0.0.0:8000"]
+CMD ["runserver", "0.0.0.0:8800"]

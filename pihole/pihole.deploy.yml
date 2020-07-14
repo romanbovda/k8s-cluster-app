@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "pihole-volume"
+  labels:
+    type: "local"
+spec:
+  storageClassName: "manual"
+  capacity:
+    storage: "500Mi"
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/ssd/pihole"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: "pihole"
+  name: "pihole-volume-claim"
+spec:
+  storageClassName: "manual"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: "500Mi"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "pihole-dnsmasq-volume"
+  labels:
+    type: "local"
+spec:
+  storageClassName: "manual"
+  capacity:
+    storage: "500Mi"
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/ssd/pihole-dnsmasq"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: "pihole"
+  name: "pihole-dnsmasq-volume-claim"
+spec:
+  storageClassName: "manual"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: "500Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: pihole
+  name: pihole
+  labels:
+    app: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+        name: pihole
+    spec:
+      containers:
+      - name: pihole
+        image: pihole/pihole:latest
+        imagePullPolicy: Always
+        env:
+        - name: TZ
+          value: "Europe/Kiev"
+        - name: WEBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pihole-secret
+              key: password
+        volumeMounts:
+        - name: pihole-volume
+          mountPath: "/etc/pihole"
+        - name: pihole-dnsmasq-volume
+          mountPath: "/etc/dnsmasq.d"
+      volumes:
+      - name: pihole-volume
+        persistentVolumeClaim:
+          claimName: pihole-volume-claim
+      - name: pihole-dnsmasq-volume
+        persistentVolumeClaim:
+          claimName: pihole-dnsmasq-volume-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: pihole
+  name: pihole-web-service
+spec:
+  selector:
+    app: pihole
+  ports:
+  - port: 80
+    name: pihole-admin
+    # Balance traffic
+  type: LoadBalancer
+    # Show real IP
+  externalTrafficPolicy: Local
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: pihole
+  name: pihole-dns-service
+spec:
+  selector:
+    app: pihole
+  ports:
+  - port: 53
+    protocol: UDP
+    name: dns-udp
+  # Balance traffic
+  type: LoadBalancer
+  # Show real IP
+  externalTrafficPolicy: Local
+
+#---
+#apiVersion: extensions/v1beta1
+#kind: Ingress
+#metadata:
+#  namespace: pihole
+#  name: pihole-ingress
+#  annotations:
+#    kubernetes.io/ingress.class: "nginx"
+#spec:
+#  rules:
+#  - host: pihole
+#    http:
+#      paths:
+#        - path: /
+#          backend:
+#            serviceName: pihole-web-service
+#            servicePort: 80
