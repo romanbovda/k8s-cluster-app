@@ -8,6 +8,10 @@ dphys-swapfile swapoff
 dphys-swapfile uninstall
 update-rc.d dphys-swapfile remove
 
+cat <<EOF > /boot/firmware/nobtcmd.txt
+cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1
+EOF
+
 # Install docker and kubernetes
 apt install docker.io -y
 systemctl enable docker
