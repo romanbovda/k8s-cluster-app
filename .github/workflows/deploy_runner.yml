@@ -2,7 +2,7 @@ name: Deploy Runner
 on: repository_dispatch
 jobs:
   build:
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps:
     - name: checkout
       uses: actions/checkout@v2.0.0
