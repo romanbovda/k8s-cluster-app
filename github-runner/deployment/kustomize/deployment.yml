@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-actions-runner
+  labels:
+    app: git-actions-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: git-actions-runner
+  template:
+    metadata:
+      labels:
+        app: git-actions-runner
+    spec:
+      containers:
+        - name: runner
+          image: n01an/actions-runner-kube:base
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: actions-runner
+          env:
+            - name: REPO
+              value:
+            - name: DOCKER_HOST
+              value: tcp://localhost:2376
+            - name: DOCKER_TLS_VERIFY
+              value: "1"
+            - name: DOCKER_CERT_PATH
+              value: /certs/client
+          volumeMounts:
+            - name: docker-certs
+              mountPath: /certs
+            - name: runner-dir
+              mountPath: /home/runner/work
+        - name: docker
+          image: docker:stable-dind
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: /certs
+          # TODO investigate rootless
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: docker-storage
+              mountPath: /var/lib/docker
+            - name: docker-certs
+              mountPath: /certs
+            - name: runner-dir
+              mountPath: /home/runner/work
+      volumes:
+        - name: docker-storage
+          emptyDir: {}
+        - name: docker-certs
+          emptyDir: {}
+        - name: runner-dir
+          emptyDir: {}

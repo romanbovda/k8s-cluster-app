@@ -1,0 +1,16 @@
+# This kustomization is expected to be valid on long-lived refs.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+
+images:
+  - name: n01an/actions-runner-kube
+    newName: n01an/actions-runner-kube
+    newTag: latest
+
+  # Useful for refs that change frequently, like master
+patchesStrategicMerge:
+- deployment/kustomize/imagePullPolicyIfNotPresent.yml
+resources:
+- ./deployment/kustomize/deployment.yml
+

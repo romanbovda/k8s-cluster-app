@@ -42,6 +42,10 @@ kubectl apply -f monitoring/prometheus.yml
 #=====-----
 
 kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
 # port forwarding
 export POD_NAME=$(kubectl get pods --namespace monitoring -l "app=grafana,release=grafana" -o jsonpath="{.items[0].metadata.name}")
 kubectl --namespace monitoring port-forward $POD_NAME 3000
+
+# backup
+helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
