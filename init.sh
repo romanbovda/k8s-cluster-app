@@ -17,9 +17,14 @@ EOF
 # Install docker and kubernetes
 apt install docker.io -y
 systemctl enable docker
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee --append /etc/apt/sources.list
+apt update
+apt install kubeadm -y
 hostnamectl set-hostname slave-node
 free -m
 docker --version
+kubeadm version
 snap install microk8s --classic --channel=latest/stable
 snap info microk8s
 microk8s enable dashboard dns ingress metallb metrics-server rbac registry storage
@@ -32,6 +37,16 @@ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 helm repo update
 helm install prometheus stable/prometheus --namespace monitoring
 helm install stable/grafana -f monitoring/grafana/values.yml --namespace monitoring
+
+# This part is for Master node
+kubeadm init --pod-network-cidr=10.10.0.0/16
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl get pods --all-namespaces
+kubectl get nodes
+
 
 # Optional relaunch deployment with capable images
 # https://stackoverflow.com/questions/42885538/raspberry-pi-docker-error-standard-init-linux-go178-exec-user-process-caused
